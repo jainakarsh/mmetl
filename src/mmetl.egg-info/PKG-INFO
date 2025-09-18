@@ -1,0 +1,61 @@
+Metadata-Version: 2.4
+Name: mmetl
+Version: 0.0.1
+Summary: Minimal mmETL pipeline framework
+Author: mmETL Team
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: typer>=0.12.0
+Requires-Dist: pydantic>=2.6
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: redis>=5.0
+Requires-Dist: rich>=13.0
+Requires-Dist: duckdb>=1.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"
+Requires-Dist: mypy>=1.8; extra == "dev"
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+Requires-Dist: black>=24.3.0; extra == "dev"
+
+# mmETL
+
+Minimal mmETL pipeline framework (MVP).
+
+## Install (editable for dev)
+
+```bash
+pip install -e .[dev]
+```
+
+## CLI
+
+```bash
+mmetl --help
+mmetl validate examples/pipelines/tabular_only.yaml
+mmetl dry-run examples/pipelines/tabular_only.yaml
+mmetl run examples/pipelines/tabular_only.yaml
+mmetl status some-run-id
+```
+
+## File layout
+
+- `src/mmETL/cli`: Typer CLI commands
+- `src/mmETL/config`: Pydantic v2 models and YAML loader (env expand, include stub)
+- `src/mmETL/core`: DAG, registry decorators, planner, executor stub
+- `src/mmETL/observability`: Redis wrapper with safe fallback
+- `src/mmETL/cache`: Fingerprint utilities
+- `tests`: unit tests for CLI, schema, DAG, fingerprints
+- `examples/pipelines`: example YAMLs
+
+## Notes
+
+- Heavy execution is stubbed. No network/DB calls by default.
+- Redis is optional via `REDIS_URL`.
+- TODO: Implement YAML includes, real adapters/transforms, scheduler/executor.

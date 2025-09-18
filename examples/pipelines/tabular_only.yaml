@@ -2,15 +2,7 @@ name: tabular_only
 resources: {}
 tasks:
   - id: extract
-    uses: noop.adapter
-    outputs: [rows]
-    config: {}
-  - id: transform
-    uses: noop.transform
-    inputs: [rows]
-    outputs: [clean_rows]
-    config: {}
+    op: noop.extract
   - id: load
-    uses: noop.adapter
-    inputs: [clean_rows]
-    config: {}
+    op: noop.load
+    inputs: [extract]

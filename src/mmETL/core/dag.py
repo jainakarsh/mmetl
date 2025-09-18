@@ -2,17 +2,20 @@
 
 Doctest:
 >>> from mmETL.core.dag import DAG
->>> g = DAG()
->>> g.add_node('a'); g.add_node('b'); g.add_edge('a','b')
->>> g.topological_order() in (["a","b"],)
-True
+>>> g = DAG(); g.add_edge('a','b')
+>>> g.topological_sort()
+['a', 'b']
 """
 from __future__ import annotations
 
 from collections import defaultdict, deque
 from typing import Dict, Iterable, List, Set
 
-__all__ = ["DAG"]
+__all__ = ["DAG", "CycleError"]
+
+
+class CycleError(Exception):
+    """Raised when a cycle is detected in the DAG."""
 
 
 class DAG:
@@ -30,7 +33,7 @@ class DAG:
         self._edges_out[src].add(dst)
         self._edges_in[dst].add(src)
 
-    def topological_order(self) -> List[str]:
+    def topological_sort(self) -> List[str]:
         indegree: Dict[str, int] = {n: len(self._edges_in[n]) for n in self._nodes}
         queue: deque[str] = deque([n for n, d in indegree.items() if d == 0])
         order: List[str] = []
@@ -42,7 +45,7 @@ class DAG:
                 if indegree[m] == 0:
                     queue.append(m)
         if len(order) != len(self._nodes):
-            raise ValueError("Cycle detected in DAG")
+            raise CycleError("Cycle detected in DAG")
         return order
 
     def nodes(self) -> Iterable[str]:

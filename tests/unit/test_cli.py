@@ -2,7 +2,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from mmETL.cli.app import app
+from mmETL.cli.main import app
 
 runner = CliRunner()
 
@@ -20,13 +20,10 @@ name: p
 resources: {}
 tasks:
   - id: a
-    uses: noop
-    outputs: [x]
-    config: {}
+    op: noop
   - id: b
-    uses: noop
-    inputs: [x]
-    config: {}
+    op: noop
+    inputs: [a]
         """,
         encoding="utf-8",
     )

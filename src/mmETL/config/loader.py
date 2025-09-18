@@ -1,10 +1,9 @@
-"""Config loader from YAML with env var expansion and include stub.
+"""YAML loader with ${ENV} expansion and simple !include support.
 
 Doctest:
 >>> from pathlib import Path
->>> from mmETL.config.loader import load_config
->>> yml = Path('examples/pipelines/tabular_only.yaml')
->>> isinstance(str(yml), str)
+>>> from mmETL.config.loader import load_yaml
+>>> isinstance(load_yaml(Path('examples/pipelines/tabular_only.yaml')), dict)
 True
 """
 from __future__ import annotations
@@ -15,35 +14,35 @@ from typing import Any
 
 import yaml
 
-from mmETL.config.models import Pipeline
-
-__all__ = ["load_config"]
+__all__ = ["load_yaml"]
 
 
-class ConfigError(Exception):
-    """Raised when configuration loading fails."""
+class LoaderError(Exception):
+    """Raised when YAML loading fails."""
 
 
-def _expand_env(content: str) -> str:
-    return os.path.expandvars(content)
+def _expand_env(text: str) -> str:
+    return os.path.expandvars(text)
 
 
-def _process_includes(content: str, base_dir: Path) -> str:
-    # TODO: Implement YAML include processing. For now, return content unchanged.
-    return content
+def _construct_include(loader: yaml.Loader, node: yaml.Node) -> Any:  # type: ignore[type-arg]
+    rel_path = loader.construct_scalar(node)  # type: ignore[attr-defined]
+    base_dir = Path(getattr(loader.stream, "name", ".")).parent  # type: ignore[attr-defined]
+    include_path = (base_dir / rel_path).resolve()
+    content = include_path.read_text(encoding="utf-8")
+    return yaml.safe_load(_expand_env(content))
 
 
-def load_config(path: Path | str) -> Pipeline:
-    path_obj = Path(path)
-    if not path_obj.exists():
-        raise ConfigError(f"Config file not found: {path_obj}")
+yaml.SafeLoader.add_constructor("!include", _construct_include)  # type: ignore[arg-type]
 
-    text = path_obj.read_text(encoding="utf-8")
+
+def load_yaml(path: Path | str) -> dict[str, Any]:
+    p = Path(path)
+    if not p.exists():
+        raise LoaderError(f"Config not found: {p}")
+    text = p.read_text(encoding="utf-8")
     text = _expand_env(text)
-    text = _process_includes(text, path_obj.parent)
-    data: Any = yaml.safe_load(text) or {}
-
-    try:
-        return Pipeline.model_validate(data)
-    except Exception as exc:  # noqa: BLE001
-        raise ConfigError(str(exc)) from exc
+    data = yaml.safe_load(text) or {}
+    if not isinstance(data, dict):
+        raise LoaderError("Root of YAML must be a mapping")
+    return data

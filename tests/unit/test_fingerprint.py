@@ -1,13 +1,16 @@
-from mmETL.cache.fingerprint import stable_fingerprint
+from mmETL.cache.fingerprints import fingerprint_pipeline
+from mmETL.config.schema import Pipeline, TaskSpec
 
 
-def test_stable_fingerprint_deterministic() -> None:
-    a = stable_fingerprint({"a": 1, "b": [1, 2, 3]})
-    b = stable_fingerprint({"b": [1, 2, 3], "a": 1})
-    assert a == b
+def test_fingerprint_deterministic() -> None:
+    p1 = Pipeline(name="p", tasks=[TaskSpec(id="t", op="noop", inputs=[], params={})], resources={})
+    p2 = Pipeline(name="p", tasks=[TaskSpec(id="t", op="noop", inputs=[], params={})], resources={})
+    assert fingerprint_pipeline(p1) == fingerprint_pipeline(p2)
 
 
-def test_stable_fingerprint_changes() -> None:
-    a = stable_fingerprint({"x": 1})
-    b = stable_fingerprint({"x": 2})
-    assert a != b
+essentially_different = Pipeline(name="p", tasks=[TaskSpec(id="t", op="noop", inputs=[], params={"x": 1})], resources={})
+
+def test_fingerprint_changes() -> None:
+    p1 = Pipeline(name="p", tasks=[TaskSpec(id="t", op="noop", inputs=[], params={"x": 1})], resources={})
+    p2 = Pipeline(name="p", tasks=[TaskSpec(id="t", op="noop", inputs=[], params={"x": 2})], resources={})
+    assert fingerprint_pipeline(p1) != fingerprint_pipeline(p2)
