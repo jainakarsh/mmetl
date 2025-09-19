@@ -1,2 +1,2 @@
 [console_scripts]
-mmetl = mmETL.cli.app:main
+mmetl = mmETL.cli.main:app
